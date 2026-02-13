@@ -19,7 +19,7 @@ class Options(usage.Options):
     longdesc = LONGDESC
 
     optParameters = [
-        ("port", "p", "tcp:4000:interface=\:\:", "endpoint to listen on"),
+        ("port", "p", r"tcp:4000:interface=\:\:", "endpoint to listen on"),
         ("blur-usage", None, None, "round logged access times to improve privacy"),
         ("log-fd", None, None, "write JSON usage logs to this file descriptor"),
         ("channel-db", None, "relay.sqlite", "location for the state database"),
@@ -33,7 +33,7 @@ class Options(usage.Options):
         ]
 
     def __init__(self):
-        super(Options, self).__init__()
+        super().__init__()
         self["websocket-protocol-options"] = []
         self["allow-list"] = True
 
@@ -57,7 +57,7 @@ class Options(usage.Options):
         try:
             value = json.loads(value)
         except:
-            raise usage.UsageError("could not parse JSON value for {}".format(key))
+            raise usage.UsageError(f"could not parse JSON value for {key}")
         self["websocket-protocol-options"].append((key, value))
 
 

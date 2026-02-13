@@ -1,4 +1,3 @@
-from __future__ import print_function, unicode_literals
 import os, random, base64
 from collections import namedtuple
 from twisted.python import log
@@ -33,7 +32,7 @@ class Mailbox:
 
     def open(self, side, when):
         # requires caller to db.commit()
-        assert isinstance(side, type("")), type(side)
+        assert isinstance(side, str), type(side)
         db = self._db
 
         already = db.execute("SELECT * FROM `mailbox_sides`"
@@ -115,7 +114,7 @@ class Mailbox:
         self.broadcast_message(sm)
 
     def close(self, side, mood, when):
-        assert isinstance(side, type("")), type(side)
+        assert isinstance(side, str), type(side)
         db = self._db
         row = db.execute("SELECT * FROM `mailboxes`"
                          " WHERE `app_id`=? AND `id`=?",
@@ -175,7 +174,7 @@ class Mailbox:
         self._listeners = {}
 
 
-class AppNamespace(object):
+class AppNamespace:
 
     def __init__(self, db, usage_db, blur_usage, log_requests, app_id,
                  allow_list):
@@ -211,7 +210,7 @@ class AppNamespace(object):
         # TODO: filter this to numeric ids?
         c = db.execute("SELECT DISTINCT `name` FROM `nameplates`"
                        " WHERE `app_id`=?", (self._app_id,))
-        return set([row["name"] for row in c.fetchall()])
+        return {row["name"] for row in c.fetchall()}
 
     def _find_available_nameplate_id(self):
         claimed = self._get_nameplate_ids()
@@ -243,16 +242,15 @@ class AppNamespace(object):
         #  * there will be one 'side' attached to it, with claimed=True
         # * a mailbox id and mailbox row will be created
         #  * a mailbox 'side' will be attached, with opened=True
-        assert isinstance(name, type("")), type(name)
-        assert isinstance(side, type("")), type(side)
+        assert isinstance(name, str), type(name)
+        assert isinstance(side, str), type(side)
         db = self._db
         row = db.execute("SELECT * FROM `nameplates`"
                          " WHERE `app_id`=? AND `name`=?",
                          (self._app_id, name)).fetchone()
         if not row:
             if self._log_requests:
-                log.msg("creating nameplate#%s for app_id %s" %
-                        (name, self._app_id))
+                log.msg(f"creating nameplate#{name} for app_id {self._app_id}")
             mailbox_id = generate_mailbox_id()
             self._add_mailbox(mailbox_id, True, side, when) # ensure row exists
             sql = ("INSERT INTO `nameplates`"
@@ -294,8 +292,8 @@ class AppNamespace(object):
         #  * a usage record will be added
         #  * the nameplate row will be removed
         #  * the nameplate sides will be removed
-        assert isinstance(name, type("")), type(name)
-        assert isinstance(side, type("")), type(side)
+        assert isinstance(name, str), type(name)
+        assert isinstance(side, str), type(side)
         db = self._db
         np_row = db.execute("SELECT * FROM `nameplates`"
                             " WHERE `app_id`=? AND `name`=?",
@@ -359,7 +357,7 @@ class AppNamespace(object):
                      total_time=total_time, result=result)
 
     def _add_mailbox(self, mailbox_id, for_nameplate, side, when):
-        assert isinstance(mailbox_id, type("")), type(mailbox_id)
+        assert isinstance(mailbox_id, str), type(mailbox_id)
         db = self._db
         row = db.execute("SELECT * FROM `mailboxes`"
                          " WHERE `app_id`=? AND `id`=?",
@@ -373,13 +371,12 @@ class AppNamespace(object):
             # does SELECT FROM `mailbox_sides`, not from `mailboxes`
 
     def open_mailbox(self, mailbox_id, side, when):
-        assert isinstance(mailbox_id, type("")), type(mailbox_id)
+        assert isinstance(mailbox_id, str), type(mailbox_id)
         self._add_mailbox(mailbox_id, False, side, when) # ensure row exists
         db = self._db
         if not mailbox_id in self._mailboxes: # ensure Mailbox object exists
             if self._log_requests:
-                log.msg("spawning #%s for app_id %s" % (mailbox_id,
-                                                        self._app_id))
+                log.msg(f"spawning #{mailbox_id} for app_id {self._app_id}")
             self._mailboxes[mailbox_id] = Mailbox(self,
                                                   self._db, self._usage_db,
                                                   self._app_id, mailbox_id)
@@ -468,13 +465,13 @@ class AppNamespace(object):
         # instead of by user action. It does reveal which mailboxes were
         # present when the pruning process began, though, so in the log run
         # it should do less logging.
-        log.msg(" prune begins (%s)" % self._app_id)
+        log.msg(f" prune begins ({self._app_id})")
         db = self._db
         modified = False
 
         for mailbox in self._mailboxes.values():
             if mailbox.has_listeners():
-                log.msg("touch %s because listeners" % mailbox._mailbox_id)
+                log.msg(f"touch {mailbox._mailbox_id} because listeners")
                 mailbox._touch(now)
         db.commit() # make sure the updates are visible below
 
@@ -483,8 +480,7 @@ class AppNamespace(object):
         for row in db.execute("SELECT * FROM `mailboxes` WHERE `app_id`=?",
                               (self._app_id,)).fetchall():
             mailbox_id = row["id"]
-            log.msg("  1: age=%s, old=%s, %s" %
-                    (now - row["updated"], now - old, mailbox_id))
+            log.msg(f"  1: age={now - row['updated']}, old={now - old}, {mailbox_id}")
             if row["updated"] > old:
                 new_mailboxes.add(mailbox_id)
             else:
@@ -539,7 +535,7 @@ class AppNamespace(object):
             if self._usage_db:
                 self._usage_db.commit()
         in_use = bool(self._mailboxes)
-        log.msg("  prune complete, modified=%s, in_use=%s" % (modified, in_use))
+        log.msg(f"  prune complete, modified={modified}, in_use={in_use}")
         return in_use
 
     def count_listeners(self):
@@ -570,10 +566,10 @@ class Server(service.MultiService):
         return self._log_requests
 
     def get_app(self, app_id):
-        assert isinstance(app_id, type(""))
+        assert isinstance(app_id, str)
         if not app_id in self._apps:
             if self._log_requests:
-                log.msg("spawning app_id %s" % (app_id,))
+                log.msg(f"spawning app_id {app_id}")
             self._apps[app_id] = AppNamespace(
                 self._db,
                 self._usage_db,
@@ -601,12 +597,12 @@ class Server(service.MultiService):
         # As with AppNamespace.prune_old_mailboxes, we log for now.
         log.msg("beginning app prune")
         for app_id in sorted(self.get_all_apps()):
-            log.msg(" app prune checking %r" % (app_id,))
+            log.msg(f" app prune checking {app_id!r}")
             app = self.get_app(app_id)
             in_use = app.prune(now, old)
             if not in_use:
                 del self._apps[app_id]
-        log.msg("app prune ends, %d apps" % len(self._apps))
+        log.msg(f"app prune ends, {len(self._apps)} apps")
 
     def dump_stats(self, now, rebooted):
         if not self._usage_db:

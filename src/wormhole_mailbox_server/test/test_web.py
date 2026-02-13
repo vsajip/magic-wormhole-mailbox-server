@@ -1,10 +1,9 @@
-from __future__ import print_function, unicode_literals
 import io, time
-import mock
+from unittest import mock
 import treq
 from twisted.trial import unittest
 from twisted.internet import defer, reactor
-from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.defer import inlineCallbacks
 from ..web import make_web_server
 from ..server import SidedMessage
 from ..database import create_or_upgrade_usage_db
@@ -38,7 +37,7 @@ class LogRequests(ServerBase, unittest.TestCase):
         reactor.connectTCP("127.0.0.1", self.rdv_ws_port, f)
         c = yield f.d
         self._clients.append(c)
-        returnValue(c)
+        return c
 
     @inlineCallbacks
     def test_log_http(self):
@@ -108,11 +107,11 @@ class WebSocketAPI(_Util, ServerBase, unittest.TestCase):
         reactor.connectTCP("127.0.0.1", self.rdv_ws_port, f)
         c = yield f.d
         self._clients.append(c)
-        returnValue(c)
+        return c
 
     def check_welcome(self, data):
         self.failUnlessIn("welcome", data)
-        self.failUnlessEqual(data["welcome"],
+        self.assertEqual(data["welcome"],
                              {"current_cli_version": "advertised.version"})
 
     @inlineCallbacks
@@ -233,7 +232,7 @@ class WebSocketAPI(_Util, ServerBase, unittest.TestCase):
             self.assertEqual(type(n), dict)
             self.assertEqual(list(n.keys()), ["id"])
             nids.add(n["id"])
-        self.assertEqual(nids, set([nameplate_id1, "np2"]))
+        self.assertEqual(nids, {nameplate_id1, "np2"})
 
     @inlineCallbacks
     def test_allocate(self):
@@ -284,7 +283,7 @@ class WebSocketAPI(_Util, ServerBase, unittest.TestCase):
         m = yield c1.next_non_ack()
         self.assertEqual(m["type"], "claimed")
         mailbox_id = m["mailbox"]
-        self.assertEqual(type(mailbox_id), type(""))
+        self.assertEqual(type(mailbox_id), str)
 
         c1.send("claim", nameplate="np1")
         err = yield c1.next_non_ack()
@@ -596,7 +595,7 @@ class WebSocketAPI(_Util, ServerBase, unittest.TestCase):
         m = yield c.next_non_ack()
         self.assertEqual(m["type"], "claimed")
         mailbox_id = m["mailbox"]
-        self.assertEqual(type(mailbox_id), type(""))
+        self.assertEqual(type(mailbox_id), str)
         np_row, side_rows = self._nameplate(app, "np1")
         claims = [(row["side"], row["claimed"]) for row in side_rows]
         self.assertEqual(claims, [("side", True)])

@@ -3,10 +3,35 @@ User-visible changes in "magic-wormhole-mailbox-server":
 
 ## Upcoming
 
+* (put release-notes here when merging / proposing a PR)
+
+
+## Release 0.6.0 (13-Feb-2026)
+
+* CI no longer tests Python 3.8 (it is EOL)
+* add Python 3.14
+* fix link to transit-relay (@nirit100)
+* fix stdout test error (@sblondon)
+* remove depracated pkg_resources use (@sblondon)
+* syntax modernization (@sblondon)
+* use f-strings everywhere (@sblondon)
+* replace returnValue() with return (@p12tic)
+* make README match tested versions (@p12tic)
+* no need to install mock (@bkmgit)
+
+
+## Release 0.5.1 (9-Nov-2024)
+
+* properly require "setuptools" for install (#47, jameshilliard)
+
+
+## Release 0.5.0 (7-Nov-2024)
+
 * correctly close a mailbox which still has a nameplate (#28)
-* remote python2 support
-* test on python 3.8, 3.9, 3.10 and 3.11 series
+* remove python2 support
+* test on python 3.8, 3.9, 3.10, 3.11 and 3.12 series
 * drop "six" (#35)
+* upgrade "versioneer"
 
 
 ## Release 0.4.1 (11-Sep-2019)
