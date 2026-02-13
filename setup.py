@@ -39,7 +39,7 @@ setup(name="magic-wormhole-mailbox-server",
       extras_require={
           ':sys_platform=="win32"': ["pywin32"],
           "dev": ["treq", "tox", "pyflakes"],
-          "release": ["dulwich", "docutils", "gpg", "wheel"],
+          "release": ["dulwich", "docutils", "wheel"],
       },
       test_suite="wormhole_mailbox_server.test",
       cmdclass=commands,
