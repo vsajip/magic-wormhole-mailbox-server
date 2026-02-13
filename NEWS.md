@@ -4,6 +4,7 @@ User-visible changes in "magic-wormhole-mailbox-server":
 ## Upcoming
 
 * (put release-notes here when merging / proposing a PR)
+* CI no longer tests Python 3.9 (it is EOL)
 
 
 ## Release 0.6.0 (13-Feb-2026)
